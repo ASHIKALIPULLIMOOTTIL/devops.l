@@ -1,0 +1,233 @@
+✅ COMPLETE FLOW: Python App → Docker → Kubernetes (Minikube)
+🔹 STEP 1: Start Kubernetes Cluster (Minikube)
+Command
+minikube start --driver=docker
+
+Usage
+
+Creates a local Kubernetes cluster
+
+Uses Docker as the VM/driver
+
+Starts:
+
+API server
+
+Scheduler
+
+Controller manager
+
+etcd
+
+Verify
+kubectl get nodes
+
+
+✅ Confirms cluster is running
+
+🔹 STEP 2: Use Minikube’s Docker Daemon
+Command
+eval $(minikube docker-env)
+
+Usage (VERY IMPORTANT)
+
+Makes your terminal use Minikube’s Docker engine
+
+Images you build are:
+
+Stored inside Minikube
+
+Immediately usable by Kubernetes
+
+Avoids ImagePullBackOff
+
+🔑 Without this → Kubernetes cannot see your image
+
+🔹 STEP 3: Create Python Application
+Files created
+app.py
+requirements.txt
+Dockerfile
+
+Purpose
+
+app.py → Flask app
+
+requirements.txt → Python dependencies
+
+Dockerfile → Build container image
+
+🔹 STEP 4: Build Docker Image
+Command
+docker build -t python-k8s-app:1.0 .
+
+Usage
+
+Builds a Docker image
+
+Tags it as python-k8s-app:1.0
+
+Stored inside Minikube Docker
+
+Verify (optional)
+docker images
+
+🔹 STEP 5: Create Deployment (deployment.yml)
+Command
+kubectl apply -f deployment.yml
+
+Usage
+
+Creates a Deployment
+
+Deployment creates:
+
+ReplicaSet
+
+3 Pods (as you defined)
+
+Verify
+kubectl get deployment
+kubectl get pods
+
+
+✔ Self-healing
+✔ Replica management
+✔ Scaling enabled
+
+🔹 STEP 6: Create Service (service.yml)
+Command
+kubectl apply -f service.yml
+
+Usage
+
+Exposes pods to the outside
+
+Provides:
+
+Stable IP
+
+Load balancing
+
+Type used: NodePort
+
+Verify
+kubectl get service
+
+🔹 STEP 7: Access Application (Correct Way)
+Command
+minikube service python-app-service
+
+Usage
+
+Automatically:
+
+Finds Minikube IP
+
+Finds NodePort
+
+Opens browser
+
+OR manually:
+
+minikube ip
+
+http://<MINIKUBE-IP>:<NODE-PORT>
+
+🔹 STEP 8: Verify Load Balancing (Optional)
+Command
+kubectl get pods -o wide
+
+
+Then repeatedly refresh browser
+→ Traffic is distributed across 3 pods
+
+🔹 STEP 9: Access Pod Internally (Debugging only)
+Command
+minikube ssh
+curl <POD-IP>:5000
+
+Usage
+
+Works only inside cluster
+
+Pod IPs are not public
+
+❌ Never use Pod IPs in production
+
+🔹 STEP 10: Cleanup Old Resources
+Command
+kubectl delete deployment nginx-deployment
+
+Usage
+
+Removes unused deployment
+
+Frees cluster resources
+
+******************************************************
+
+A Kubernetes Service provides a stable IP and DNS name for a set of Pods and performs load balancing to distribute traffic among them.
+
+🔁 How Service Load Balancing works (with your 3 pods)
+
+You currently have:
+
+kubectl get pods
+
+python-app-deployment-... (3 pods)
+
+
+When you hit:
+
+http://192.168.49.2:30007
+
+
+Kubernetes:
+
+Picks one of the 3 pods
+
+Sends traffic to it
+
+Rotates requests across pods
+
+💡 This is built-in load balancing (round-robin style)
+
+❌ Why you should NOT use Pod IPs
+
+Example Pod IP:
+
+10.244.0.15
+
+
+Problems:
+
+Pod can die anytime
+
+IP will change
+
+No load balancing
+
+👉 Services solve this problem
+
+*******************************************
+
+5️⃣ PORT(S) → 5000:30007/TCP
+
+This is the most important part 👇
+
+<service-port> : <node-port>
+
+Breakdown:
+
+5000 → Container port (Flask app listens here)
+
+30007 → NodePort (opened on Minikube VM)
+
+So traffic flow is:
+
+Browser
+ → 192.168.49.2:30007
+ → Service
+ → Pod:5000
+
