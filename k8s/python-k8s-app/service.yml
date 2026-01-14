@@ -3,11 +3,10 @@ kind: Service
 metadata:
   name: python-app-service
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: python-app
   ports:
     - port: 5000
       targetPort: 5000
-      nodePort: 30007
 
