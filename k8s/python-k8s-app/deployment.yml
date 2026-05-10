@@ -19,3 +19,18 @@ spec:
         ports:
         - containerPort: 5000
 
+        volumeMounts:
+        - name: config-volume
+          mountPath: /config
+        - name: secret-volume
+          mountPath: /secrets
+          readOnly: true
+
+      volumes:
+      - name: config-volume
+        configMap:
+          name: python-app-config
+      - name: secret-volume
+        secret:
+          secretName: python-app-secret
+
